@@ -1,0 +1,4 @@
+pandas~=1.1.2
+matplotlib~=3.3.2
+python-dotenv~=0.14.0
+pytz~=2020.1
