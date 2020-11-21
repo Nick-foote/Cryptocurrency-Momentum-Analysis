@@ -8,8 +8,8 @@ from connection_pool import get_connection
 
 class Chart(Data):
     """Takes asset symbol input from user.
-    Inherits self.name, self.dataframe.
-    Charts Price history and EMA crossovers with MatPlotLib
+    Inherits self.name, self.dataframe, connecting to the price history in each coin's CSV file.
+    Using MatPlotLib to chart values, EMA's, and profit accumulation
     """
     def __init__(self, asset: str):
         super().__init__(asset)
@@ -57,15 +57,16 @@ class Chart(Data):
         plt.show()
 
         # The new column "position"  indicates going long on a stock.
-        # If the fast EMA > slow EMA, denote as 1 (long one asset/stock), otherwise denote as 0 (do nothing)
+        # If the fast EMA > slow EMA, denote as 1 (long one asset/stock), otherwise denote as 0 (neutral)
         df['position'] = [1 if df.loc[ei, 'Fast EMA'] > df.loc[ei, 'Slow EMA'] else 0 for ei in df.index]
 
         df['close1'] = df['close'].shift(-1)
         df['profit'] = [
-            df.loc[ei, 'close1'] - df.loc[ei, 'close'] if df.loc[ei, 'position'] == 1
-            else 0 for ei in df.index]
+            df.loc[ei, 'close1'] - df.loc[ei, 'close'] if df.loc[ei, 'position'] == 1 else 0 for ei in df.index
+        ]
 
-        # Change in profit record, not currently needed.
+        # The 2 commented out lines of the change in profit record, not currently needed.
+        # Could be used in deeper analysis.
         # df['profit'].plot()
         # plt.axhline(y=0, color='red')
 
@@ -87,10 +88,10 @@ class Chart(Data):
         plt.legend()
         plt.show()
 
-        print(f"\nWith an initial investment of $100 in {self.name}, you would have return of ${(100 * roi + 100):,.0f} today")
+        print(f"\nWith an initial investment of $100 in {self.name}, using the chosen strategy you would have return of ${(100 * roi + 100):,.0f} today")
         print(f'Overall return on investment is {roi_percent:,.2f}%')
 
-        # Only include ROI to compare when strategy is applied to all years
+        # Only record ROI in database to compare when strategy is applied to all years.
         if year_start is None:
             try:
                 with get_connection() as connection:

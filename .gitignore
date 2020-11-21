@@ -1,3 +1,6 @@
 plan.txt
 .env
 venv
+.gitignore
+.idea
+__pycache__

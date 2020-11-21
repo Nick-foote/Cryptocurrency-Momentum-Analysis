@@ -115,7 +115,7 @@ def prompt_get_top_20_results():
 
 
 def print_results(results):
-    print(f"-- Top performing EMA values (fast/slow) for crypto asset --\n")
+    print(f"-- Top performing EMA values (fast/slow) for the crypto asset --\n")
     for result in results:
         print(f"{result[0]}/{result[1]} with a return of {result[2]}%")
 
