@@ -12,7 +12,9 @@ reporting your Return of Investment.
 
 #### Start Up
 
-First of all the program will ask the user to chose which coin to perform the analysis on:
+First of all the program will ask the user to chose which coin to perform the analysis on.
+
+Currently only the following most popular coins are available, but could add additional coins.
 
 ```
 Options currently are:
