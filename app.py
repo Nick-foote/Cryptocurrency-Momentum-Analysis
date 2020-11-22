@@ -1,9 +1,7 @@
-import datetime
-import pytz
-
 from connection_pool import get_connection
 import database
 from models.chart import Chart
+from strategy import Strategy
 
 # -- String Statements --
 
@@ -37,114 +35,68 @@ Please pick an option:
 Your selection:    
 """
 
-
-YEAR_PROMPT = """
-    Would you like to see how the strategy performs over specific years? 
-    (otherwise analysis will be over all the price history available) (y/N)
-    """
+crypto_asset_symbols = ['btc', 'eth', 'xrp', 'link']
 
 
-# -- Functions --
-
-def prompt_get_price_chart():
-    """plots price chart over the whole time range with only the Close price
-    """
-    Chart(user_asset.lower()).get_price_chart()
-
-
-def input_ema_values():
-    """function to get user input values for both fast and slow EMA.
-    Will only accept an integer for EMA values. Forces user to input a higher
-    integer for Slow EMA than Fast EMA.
-    """
-    while True:
-        try:
-            input_fast = int(input("Enter the fast/lower EMA: "))
-        except ValueError:
-            print("\nInvalid entry. Please enter a number")
-        else:
-            break
-
-    while True:
-        try:
-            input_slow = int(input("Enter the slow/higher EMA: "))
-            if input_slow < input_fast:
-                raise Exception
-        except ValueError:
-            print("\nInvalid entry. Please enter a number.")
-        except Exception:
-            print("\nInvalid entry. The Slow EMA needs to be larger than the Fast EMA. Please try again.")
-        else:
-            break
-
-    return input_fast, input_slow
+class App:
+    def __init__(self):
+        """Initial set up and selection of crypto asset to perform analysis on."""
+        self.chart = None
+        self.user_asset = None
+        print(WELCOME)
 
 
-def prompt_ema_analysis():
-    input_fast, input_slow = input_ema_values()
+    def start(self):
+        while True:
+            self.user_asset = input(ASSET_CHOICE).lower()
+            if self.user_asset in crypto_asset_symbols:
+                break
+            else:
+                print('Invalid Entry. Please enter a symbol.')
+                continue
 
-    year_log = input(YEAR_PROMPT)
-    if year_log == "y":
-        year_start = int(input("Enter the year you wish to Start from (2016 earliest): "))
-        year_end = input("Enter the year you wish to End from (or press enter to end in the present): ")
+        with get_connection() as connection:
+            database.create_ema_table(connection, self.user_asset)
+        self.chart = Chart(self.user_asset)
+        self.menu()
 
-        year_start = datetime.datetime(
-            year=year_start, month=1, day=1, hour=0, minute=0, second=0
-        ).astimezone(pytz.utc)
+    def menu(self):
+        """turns the menu mapped value into a function()"""
+        while len(selection := input(MENU_PROMPT)) != 0:
+            if selection == "1":
+                self.get_price_chart()
+            elif selection == "2":
+                self.ema_analysis()
+            elif selection == "3":
+                self.get_top_20_results()
+            else:
+                print("Invalid input selected. Please try again.")
 
-        if year_end:
-            year_end = datetime.datetime(
-                year=int(year_end), month=1, day=1, hour=0, minute=0, second=0
-            ).astimezone(pytz.utc)
+    def get_price_chart(self):
+        """plots price chart over the whole time range with only the Close price.
+        """
 
-        # Analysis over user selected years, non year specific
-        analysis = Chart(user_asset)
-        analysis.ema_strategy(input_fast, input_slow, year_start, year_end)
+        self.chart.get_price_chart()
 
-    # Analysis over the available price history, non year specific
-    else:
-        analysis = Chart(user_asset)
-        analysis.ema_strategy(input_fast, input_slow)
+    def ema_analysis(self):
+        strategy = Strategy(self)
+        strategy.input_ema_values()
+        strategy.analysis()
 
-
-# Retrieves the highest performing EMA pairs for an asset
-def prompt_get_top_20_results():
-    with get_connection() as connection:
-        results = database.get_top_20_results(connection, user_asset)
-        print_results(results)
-
-
-def print_results(results):
-    print(f"-- Top performing EMA values (fast/slow) for the crypto asset --\n")
-    for result in results:
-        print(f"{result[0]}/{result[1]} with a return of {result[2]}%")
-
-
-# -- App Menu --
-
-# Mapping the menu to actions
-MENU_OPTIONS = {
-    "1": prompt_get_price_chart,
-    "2": prompt_ema_analysis,
-    "3": prompt_get_top_20_results,
-}
+    def get_top_20_results(self):
+        """Retrieves the highest performing EMA pairs for an asset.
+        """
+        with get_connection() as connection:
+            results = database.get_top_20_results(connection, self.user_asset)
+            print(f"-- Top performing EMA values (fast/slow) for {self.chart.name} --\n")
+            for result in results:
+                print(f"{result[0]}/{result[1]} with a return of {result[2]}%")
 
 
-def menu():
-    print(WELCOME)
 
-    with get_connection() as connection:
-        database.create_ema_table(connection, user_asset)
+app = App()
 
-    while len(selection := input(MENU_PROMPT)) != 0:
-        try:
-            MENU_OPTIONS[selection]()        # turns the menu mapped value into a function()
-        except KeyError:
-            print("Invalid input selected. Please try again.")
-
-
-user_asset = input(ASSET_CHOICE)
-
-menu()
+if __name__ == '__main__':
+    app.start()
 
 print("-- Exiting App --")

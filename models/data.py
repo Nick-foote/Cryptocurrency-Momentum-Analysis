@@ -2,12 +2,14 @@ import pandas as pd
 
 # -- Cryptocurrencies --
 
-crypto_filepath = 'files/crypto_currencies/'
+filepath = 'files/crypto_currencies/'
 
-files = {'btc': {'name': 'Bitcoin', 'filename': 'BTCUSD_BITSTAMP_240.csv'},
-         'eth': {'name': 'Etherum', 'filename': 'ETHUSD_COINBASE_240.csv'},
-         'xrp': {'name': 'XRP', 'filename': 'XRPUSD_BITSTAMP_240.csv'},
-         'link': {'name': 'LinkChain', 'filename': 'LINKUSD_BINANCE_240.csv'}}
+files = {
+    'btc': {'name': 'Bitcoin', 'filename': 'BTCUSD_BITSTAMP_240.csv'},
+    'eth': {'name': 'Ethereum', 'filename': 'ETHUSD_COINBASE_240.csv'},
+    'xrp': {'name': 'XRP', 'filename': 'XRPUSD_BITSTAMP_240.csv'},
+    'link': {'name': 'LinkChain', 'filename': 'LINKUSD_BINANCE_240.csv'}
+}
 
 
 class Data:
@@ -18,7 +20,7 @@ class Data:
 
     def read_in(self):
         try:
-            self.dataframe = pd.read_csv(crypto_filepath + files[self.coin]['filename'],
+            self.dataframe = pd.read_csv(filepath + files[self.coin]['filename'],
                                          usecols=['time', 'close'],
                                          parse_dates=['time']
                                          )
